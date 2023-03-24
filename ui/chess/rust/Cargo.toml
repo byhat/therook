@@ -1,0 +1,21 @@
+[package]
+name = "therook-ui-chess"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+cxx = "1.0"
+cxx-qt = "0.5"
+cxx-qt-lib = "0.5"
+
+chess = "3"
+
+[build-dependencies]
+cxx-qt-build = "0.5"
+
+[profile.release]
+opt-level = "z"
+lto = true
