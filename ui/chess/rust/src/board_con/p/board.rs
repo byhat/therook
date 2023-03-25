@@ -49,6 +49,7 @@ impl LegalMove {
         self.inner.get_dest()
     }
 }
+
 #[derive(Default)]
 pub struct BoardImpl {
     inner: chess::Board,
@@ -96,7 +97,7 @@ impl BoardImpl {
                 if let Some(piece) = self.piece_on(dest) {
                     if piece.color != self.inner.side_to_move() {
                         // Opponent's piece
-                        capture = Some(dest);
+                        capture.replace(dest);
                     }
                 }
 
@@ -107,12 +108,12 @@ impl BoardImpl {
                         // it moved 2 squares
                         if dest.get_file() == chess::File::G {
                             // Kingside castling
-                            castling = Some((
+                            castling.replace((
                                 chess::Square::make_square(src.get_rank(), chess::File::H),
                                 chess::Square::make_square(src.get_rank(), chess::File::F),
                             ));
                         } else if dest.get_file() == chess::File::C {
-                            castling = Some((
+                            castling.replace((
                                 chess::Square::make_square(src.get_rank(), chess::File::A),
                                 chess::Square::make_square(src.get_rank(), chess::File::D),
                             ));
@@ -127,8 +128,10 @@ impl BoardImpl {
                         // it captured something
                         if self.piece_on(dest).is_none() {
                             // holy hell
-                            en_passant =
-                                Some(chess::Square::make_square(src.get_rank(), dest.get_file()));
+                            en_passant.replace(chess::Square::make_square(
+                                src.get_rank(),
+                                dest.get_file(),
+                            ));
                         }
                     }
                 }

@@ -17,20 +17,4 @@ BasePiece {
     visible: false
 
     pieceId: 0
-
-    function show(id, x, y) {
-        phantomPiece.pieceId = id;
-        phantomPiece.centerX = x;
-        phantomPiece.centerY = y;
-        phantomPiece.visible = true;
-    }
-
-    function update(x, y) {
-        phantomPiece.centerX = x;
-        phantomPiece.centerY = y;
-    }
-
-    function hide() {
-        phantomPiece.visible = false;
-    }
 }

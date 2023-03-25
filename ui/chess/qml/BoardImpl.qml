@@ -29,38 +29,10 @@ Item {
         id: pieceView
     }
 
-    QtObject {
-        readonly property var component1: Qt.createComponent("HintRect.qml")
-        readonly property var component2: Qt.createComponent("CaptureHintRect.qml")
-
-        function componentConstructor1(square) {
-            return component1.createObject(board, {
-                "square": square,
-                "size": Qt.binding(function () {
-                    return board.pieceSize;
-                })
-            })
-        }
-
-        function componentConstructor2(square) {
-            return component2.createObject(board, {
-                "square": square,
-                "size": Qt.binding(function () {
-                    return board.pieceSize;
-                })
-            })
-        }
-
-        readonly property var inner: new BoardView.Hint(componentConstructor1, componentConstructor2)
-
-        id: hintView
-    }
-
     Component.onCompleted: {
         boardCon.initialize();
 
         pieceView.inner.connect(boardCon);
-        hintView.inner.connect(boardCon);
 
         boardCon.resyncBoard();
     }
@@ -68,25 +40,8 @@ Item {
     BoardCon {
         id: boardCon
         pieceSize: board.pieceSize
-
-        onShowHoverRect: function (square) {
-            hoverRect.show(square)
-        }
-        onHideHoverRect: hoverRect.hide()
-
-        onShowHighlightRect: function (square) {
-            highlightRect.show(square)
-        }
-        onHideHighlightRect: highlightRect.hide()
-
-        onShowPhantomPiece: function (id, x, y) {
-            phantomPiece.show(id, x, y);
-        }
-        onUpdatePhantomPiece: function (x, y) {
-            phantomPiece.update(x, y);
-        }
-        onHidePhantomPiece: phantomPiece.hide()
     }
+
     DragArea {
         id: dragArea
         anchors.fill: parent
@@ -97,16 +52,45 @@ Item {
         onDragEnded: function (srcX, srcY, destX, destY) {
             boardCon.coordDragEnded(srcX, srcY, destX, destY);
         }
-        onDragEvent: function (x, y) {
-            boardCon.coordDragEvent(x, y);
-        }
         onDragStarted: function (srcX, srcY, destX, destY) {
             boardCon.coordDragStarted(srcX, srcY, destX, destY);
         }
     }
 
+    Item {
+        anchors.fill: parent
+
+        id: hintCanvas
+
+        Repeater {
+            model: boardCon.hintSq
+
+            HintRect {
+                square: modelData
+
+                size: board.pieceSize
+            }
+        }
+
+        Repeater {
+            model: boardCon.captureSq
+
+            CaptureHintRect {
+                square: modelData
+
+                size: board.pieceSize
+            }
+        }
+    }
+
     PhantomPiece {
         id: phantomPiece
+
+        visible: boardCon.phantomId >= 0
+        pieceId: boardCon.phantomId < 0 ? 0 : boardCon.phantomId
+
+        centerX: dragArea.dragPos.x
+        centerY: dragArea.dragPos.y
 
         size: board.pieceSize
         sourceSize: board.pieceSize
@@ -114,10 +98,17 @@ Item {
     HighlightRect {
         id: highlightRect
 
+        visible: boardCon.highlightSq >= 0
+        square: boardCon.highlightSq < 0 ? 0 : boardCon.highlightSq
+
         size: board.pieceSize
     }
     HoverRect {
         id: hoverRect
+
+        visible: boardCon.phantomId >= 0
+        mouseX: dragArea.dragPos.x
+        mouseY: dragArea.dragPos.y
 
         size: board.pieceSize
     }

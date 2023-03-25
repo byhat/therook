@@ -57,7 +57,6 @@ impl BoardConImpl {
                         dest_x,
                         dest_y,
                     } => self.coord_drag_started(src_x, src_y, dest_x, dest_y, piece_size),
-                    DragSlots::Updated { x, y } => self.coord_drag_event(x, y, piece_size),
                     DragSlots::Ended {
                         src_x,
                         src_y,
@@ -78,7 +77,7 @@ impl BoardConImpl {
     pub fn resync_board(&self) {
         println!("Synchronizing board...");
 
-        self.emit(BoardSignals::Reset);
+        self.emit(Signals::Reset);
 
         for piece in self.board.pieces() {
             self.emit(PieceSignals::Place {
@@ -121,8 +120,8 @@ impl BoardConImpl {
         }
 
         self.highlighted_square.replace(sq);
-        self.emit(HighlightRectSignals::Show {
-            square: sq.to_int(),
+        self.emit(Signals::Highlight {
+            square: Some(sq.to_int()),
         });
 
         self.show_hints(sq);
@@ -156,30 +155,14 @@ impl BoardConImpl {
         {
             let square = sq.to_int();
             self.emit(PieceSignals::Remove { square });
-            self.emit(HighlightRectSignals::Show { square });
-            self.emit(HoverRectSignals::Show { square });
+            self.emit(Signals::Highlight {
+                square: Some(square),
+            });
         }
 
-        self.emit(PhantomPieceSignals::Show {
-            id: piece_id,
-            x: dest_x,
-            y: dest_y,
-        });
+        self.emit(Signals::Phantom { id: Some(piece_id) });
 
         self.show_hints(sq);
-    }
-
-    pub fn coord_drag_event(&mut self, x: f32, y: f32, piece_size: u32) {
-        if self.dragged_piece.is_none() {
-            return;
-        }
-
-        self.emit(PhantomPieceSignals::Update { x, y });
-
-        let sq = BoardConImpl::coord_to_square(x, y, piece_size);
-        self.emit(HoverRectSignals::Show {
-            square: sq.to_int(),
-        });
     }
 
     pub fn coord_drag_ended(
@@ -191,8 +174,7 @@ impl BoardConImpl {
         piece_size: u32,
     ) {
         {
-            self.emit(PhantomPieceSignals::Hide);
-            self.emit(HoverRectSignals::Hide);
+            self.emit(Signals::Phantom { id: None });
         }
 
         let piece = if let Some(val) = self.dragged_piece.take() {
@@ -217,8 +199,13 @@ impl BoardConImpl {
         // A legal move
         self.highlighted_square.take();
 
-        self.emit(HintSignals::Reset);
-        self.emit(HighlightRectSignals::Hide);
+        self.emit(Signals::Hint {
+            squares: Vec::new(),
+        });
+        self.emit(Signals::Capture {
+            squares: Vec::new(),
+        });
+        self.emit(Signals::Highlight { square: None });
 
         // TODO: promotion
 
@@ -236,25 +223,37 @@ impl BoardConImpl {
 
 impl BoardConImpl {
     fn reset_highlights(&self) {
-        self.emit(HintSignals::Reset);
-        self.emit(PhantomPieceSignals::Hide);
-        self.emit(HighlightRectSignals::Hide);
-        self.emit(HoverRectSignals::Hide);
+        self.emit(Signals::Phantom { id: None });
+
+        self.emit(Signals::Hint {
+            squares: Vec::new(),
+        });
+        self.emit(Signals::Capture {
+            squares: Vec::new(),
+        });
+        self.emit(Signals::Highlight { square: None });
     }
 
     fn show_hints(&self, sq: chess::Square) {
-        let legal_move_vec = self.board.moves_of(sq);
-        for legal_move in legal_move_vec {
-            if legal_move.capture.is_some() {
-                self.emit(HintSignals::Capture {
-                    square: legal_move.dest().to_int(),
-                });
-            } else {
-                self.emit(HintSignals::Place {
-                    square: legal_move.dest().to_int(),
-                });
-            }
-        }
+        let (legal_capture_vec, legal_move_vec): (Vec<LegalMove>, Vec<LegalMove>) = self
+            .board
+            .moves_of(sq)
+            .into_iter()
+            .partition(|m| m.capture.is_some());
+        let legal_move_vec = legal_move_vec
+            .into_iter()
+            .map(|m| m.dest().to_int())
+            .collect::<Vec<u8>>();
+        let legal_capture_vec = legal_capture_vec
+            .into_iter()
+            .map(|m| m.dest().to_int())
+            .collect::<Vec<u8>>();
+        self.emit(Signals::Hint {
+            squares: legal_move_vec,
+        });
+        self.emit(Signals::Capture {
+            squares: legal_capture_vec,
+        });
     }
 
     fn legal_move(&self, src_sq: chess::Square, dest_sq: chess::Square) -> Option<LegalMove> {

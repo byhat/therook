@@ -1,10 +1,11 @@
 import QtQuick
 
 Item {
+    property alias dragPos: dragController.curPos
+
     id: dragArea
     signal clicked(real x, real y)
     signal dragEnded(real srcX, real srcY, real destX, real destY)
-    signal dragEvent(real x, real y)
     signal dragStarted(real srcX, real srcY, real destX, real destY)
 
     //    onDragChanged: console.log("dragging changed:", drag)
@@ -37,7 +38,6 @@ Item {
         property point initialPos: Qt.point(0, 0)
 
         signal dragEnded(real srcX, real srcY, real destX, real destY)
-        signal dragEvent(real x, real y)
         signal dragStarted(real srcX, real srcY, real destX, real destY)
 
         function pos_changed(event, pressed) {
@@ -72,14 +72,10 @@ Item {
             const rect_y = Math.max(Math.min(event.y, dragArea.y + dragArea.height - 1), dragArea.y);
             curPos.x = rect_x;
             curPos.y = rect_y;
-            dragEvent(rect_x, rect_y);
         }
 
         onDragEnded: function (srcX, srcY, destX, destY) {
             dragArea.dragEnded(srcX, srcY, destX, destY);
-        }
-        onDragEvent: function (x, y) {
-            dragArea.dragEvent(x, y);
         }
         onDragStarted: function (srcX, srcY, destX, destY) {
             dragArea.dragStarted(srcX, srcY, destX, destY);
