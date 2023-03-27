@@ -103,6 +103,22 @@ Item {
 
         size: board.pieceSize
     }
+    HighlightRect {
+        id: lastSrcRect
+
+        visible: boardCon.lastSrcSq >= 0
+        square: boardCon.lastSrcSq < 0 ? 0 : boardCon.lastSrcSq
+
+        size: board.pieceSize
+    }
+    HighlightRect {
+        id: lastDestRect
+
+        visible: boardCon.lastDestSq >= 0
+        square: boardCon.lastDestSq < 0 ? 0 : boardCon.lastDestSq
+
+        size: board.pieceSize
+    }
     HoverRect {
         id: hoverRect
 

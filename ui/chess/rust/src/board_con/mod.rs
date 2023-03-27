@@ -32,8 +32,13 @@ mod ffi {
         hint_sq: QVector_u8,
         #[qproperty]
         capture_sq: QVector_u8,
+
         #[qproperty]
         highlight_sq: i8,
+        #[qproperty]
+        last_src_sq: i8,
+        #[qproperty]
+        last_dest_sq: i8,
 
         tx: Option<std::sync::mpsc::Sender<p::Slots>>,
     }
@@ -47,7 +52,10 @@ mod ffi {
 
                 hint_sq: QVector_u8::default(),
                 capture_sq: QVector_u8::default(),
+
                 highlight_sq: -1,
+                last_src_sq: -1,
+                last_dest_sq: -1,
 
                 tx: None,
             }
@@ -55,7 +63,15 @@ mod ffi {
     }
 
     impl qobject::BoardCon {
-        pub fn rx_thread(mut self: Pin<&mut Self>, signal: p::Signals) {
+        pub fn handle_signal(mut self: Pin<&mut Self>, signal: p::Signals) {
+            struct OptionU8(Option<u8>);
+
+            impl Into<i8> for OptionU8 {
+                fn into(self) -> i8 {
+                    self.0.map(|v| v as i8).unwrap_or(-1)
+                }
+            }
+
             match signal {
                 p::Signals::Reset => self.as_mut().emit(Signals::ResetBoard),
                 p::Signals::Piece(piece) => match piece {
@@ -73,13 +89,16 @@ mod ffi {
                         self.as_mut().emit(Signals::RemovePiece { square })
                     }
                 },
-                p::Signals::Phantom { id } => {
-                    self.set_phantom_id(id.map(|v| v as i8).unwrap_or(-1))
-                }
+                p::Signals::Phantom { id } => self.set_phantom_id(OptionU8(id).into()),
                 p::Signals::Hint { squares } => self.set_hint_sq(squares.into()),
                 p::Signals::Capture { squares } => self.set_capture_sq(squares.into()),
-                p::Signals::Highlight { square } => {
-                    self.set_highlight_sq(square.map(|v| v as i8).unwrap_or(-1))
+                p::Signals::Highlight { square } => self.set_highlight_sq(OptionU8(square).into()),
+                p::Signals::LastMove {
+                    src_square,
+                    dest_square,
+                } => {
+                    self.as_mut().set_last_src_sq(OptionU8(src_square).into());
+                    self.as_mut().set_last_dest_sq(OptionU8(dest_square).into());
                 }
             }
         }
@@ -97,7 +116,7 @@ mod ffi {
             std::thread::spawn(move || {
                 while let Ok(signal) = signals_rx.recv() {
                     qt_thread
-                        .queue(move |qt_object| qt_object.rx_thread(signal))
+                        .queue(move |qt_object| qt_object.handle_signal(signal))
                         .unwrap();
                 }
             });
@@ -132,16 +151,10 @@ mod ffi {
         }
 
         #[qinvokable]
-        pub fn coord_drag_started(&self, src_x: f32, src_y: f32, dest_x: f32, dest_y: f32) {
+        pub fn coord_drag_started(&self, src_x: f32, src_y: f32, _dest_x: f32, _dest_y: f32) {
             if let Some(tx) = self.try_tx() {
                 tx.send(p::Slots::MouseEvent {
-                    slot: p::DragSlots::Started {
-                        src_x,
-                        src_y,
-                        dest_x,
-                        dest_y,
-                    }
-                    .into(),
+                    slot: p::DragSlots::Started { src_x, src_y }.into(),
                     piece_size: *self.piece_size(),
                 })
                 .unwrap()
@@ -149,16 +162,10 @@ mod ffi {
         }
 
         #[qinvokable]
-        pub fn coord_drag_ended(&self, src_x: f32, src_y: f32, dest_x: f32, dest_y: f32) {
+        pub fn coord_drag_ended(&self, _src_x: f32, _src_y: f32, dest_x: f32, dest_y: f32) {
             if let Some(tx) = self.try_tx() {
                 tx.send(p::Slots::MouseEvent {
-                    slot: p::DragSlots::Ended {
-                        src_x,
-                        src_y,
-                        dest_x,
-                        dest_y,
-                    }
-                    .into(),
+                    slot: p::DragSlots::Ended { dest_x, dest_y }.into(),
                     piece_size: *self.piece_size(),
                 })
                 .unwrap()

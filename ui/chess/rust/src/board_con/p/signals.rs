@@ -14,10 +14,22 @@ pub enum Signals {
     Reset,
     Piece(PieceSignals),
 
-    Phantom { id: Option<u8> },
+    Phantom {
+        id: Option<u8>,
+    },
 
-    Hint { squares: Vec<u8> },
-    Capture { squares: Vec<u8> },
+    Hint {
+        squares: Vec<u8>,
+    },
+    Capture {
+        squares: Vec<u8>,
+    },
 
-    Highlight { square: Option<u8> },
+    Highlight {
+        square: Option<u8>,
+    },
+    LastMove {
+        src_square: Option<u8>,
+        dest_square: Option<u8>,
+    },
 }

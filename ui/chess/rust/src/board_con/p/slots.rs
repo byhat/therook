@@ -13,18 +13,8 @@ pub enum MouseEventSlots {
 }
 
 pub enum DragSlots {
-    Started {
-        src_x: f32,
-        src_y: f32,
-        dest_x: f32,
-        dest_y: f32,
-    },
-    Ended {
-        src_x: f32,
-        src_y: f32,
-        dest_x: f32,
-        dest_y: f32,
-    },
+    Started { src_x: f32, src_y: f32 },
+    Ended { dest_x: f32, dest_y: f32 },
 }
 
 impl From<DragSlots> for MouseEventSlots {

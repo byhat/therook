@@ -51,18 +51,12 @@ impl BoardConImpl {
             Slots::MouseEvent { slot, piece_size } => match slot {
                 MouseEventSlots::Clicked { x, y } => self.coord_clicked(x, y, piece_size),
                 MouseEventSlots::Drag(slot) => match slot {
-                    DragSlots::Started {
-                        src_x,
-                        src_y,
-                        dest_x,
-                        dest_y,
-                    } => self.coord_drag_started(src_x, src_y, dest_x, dest_y, piece_size),
-                    DragSlots::Ended {
-                        src_x,
-                        src_y,
-                        dest_x,
-                        dest_y,
-                    } => self.coord_drag_ended(src_x, src_y, dest_x, dest_y, piece_size),
+                    DragSlots::Started { src_x, src_y } => {
+                        self.coord_drag_started(src_x, src_y, piece_size)
+                    }
+                    DragSlots::Ended { dest_x, dest_y } => {
+                        self.coord_drag_ended(dest_x, dest_y, piece_size)
+                    }
                 },
             },
         }
@@ -106,9 +100,7 @@ impl BoardConImpl {
                     dest_square: sq.to_int(),
                 });
 
-                self.en_passant_castling(&legal_move);
-
-                self.board.apply_move(legal_move);
+                self.apply_move(legal_move);
 
                 return;
             }
@@ -127,14 +119,7 @@ impl BoardConImpl {
         self.show_hints(sq);
     }
 
-    pub fn coord_drag_started(
-        &mut self,
-        src_x: f32,
-        src_y: f32,
-        dest_x: f32,
-        dest_y: f32,
-        piece_size: u32,
-    ) {
+    pub fn coord_drag_started(&mut self, src_x: f32, src_y: f32, piece_size: u32) {
         self.reset_highlights();
 
         self.highlighted_square.take();
@@ -165,14 +150,7 @@ impl BoardConImpl {
         self.show_hints(sq);
     }
 
-    pub fn coord_drag_ended(
-        &mut self,
-        src_x: f32,
-        src_y: f32,
-        dest_x: f32,
-        dest_y: f32,
-        piece_size: u32,
-    ) {
+    pub fn coord_drag_ended(&mut self, dest_x: f32, dest_y: f32, piece_size: u32) {
         {
             self.emit(Signals::Phantom { id: None });
         }
@@ -215,9 +193,7 @@ impl BoardConImpl {
             square: dest_sq.to_int(),
         });
 
-        self.en_passant_castling(&legal_move);
-
-        self.board.apply_move(legal_move);
+        self.apply_move(legal_move);
     }
 }
 
@@ -268,7 +244,13 @@ impl BoardConImpl {
         None
     }
 
-    fn en_passant_castling(&self, legal_move: &LegalMove) {
+    // The moved piece has to be placed before calling this method.
+    fn apply_move(&mut self, legal_move: LegalMove) {
+        self.emit(Signals::LastMove {
+            src_square: Some(legal_move.src().to_int()),
+            dest_square: Some(legal_move.dest().to_int()),
+        });
+
         if let Some(ep_square) = legal_move.en_passant {
             self.emit(PieceSignals::Remove {
                 square: ep_square.to_int(),
@@ -281,6 +263,8 @@ impl BoardConImpl {
                 dest_square: dest_sq.to_int(),
             });
         }
+
+        self.board.apply_move(legal_move);
     }
 
     pub fn coord_to_square(x: f32, y: f32, piece_size: u32) -> chess::Square {
