@@ -5,8 +5,6 @@ Square {
 
     id: highlightRect
 
-    visible: false
-
     Rectangle {
         anchors.fill: parent
 

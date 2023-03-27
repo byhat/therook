@@ -83,50 +83,48 @@ Item {
         }
     }
 
-    PhantomPiece {
-        id: phantomPiece
+    Item {
+        anchors.fill: parent
 
-        visible: boardCon.phantomId >= 0
-        pieceId: boardCon.phantomId < 0 ? 0 : boardCon.phantomId
-
-        centerX: dragArea.dragPos.x
-        centerY: dragArea.dragPos.y
-
-        size: board.pieceSize
-        sourceSize: board.pieceSize
+        HighlightRect {
+            square: boardCon.highlightSq
+            size: board.pieceSize
+        }
+        HighlightRect {
+            square: boardCon.lastSrcSq
+            size: board.pieceSize
+        }
+        HighlightRect {
+            square: boardCon.lastDestSq
+            size: board.pieceSize
+        }
     }
-    HighlightRect {
-        id: highlightRect
 
-        visible: boardCon.highlightSq >= 0
-        square: boardCon.highlightSq < 0 ? 0 : boardCon.highlightSq
+    Item {
+        anchors.fill: parent
 
-        size: board.pieceSize
-    }
-    HighlightRect {
-        id: lastSrcRect
+        PhantomPiece {
+            id: phantomPiece
 
-        visible: boardCon.lastSrcSq >= 0
-        square: boardCon.lastSrcSq < 0 ? 0 : boardCon.lastSrcSq
+            visible: boardCon.phantomId >= 0
+            pieceId: boardCon.phantomId < 0 ? 0 : boardCon.phantomId
 
-        size: board.pieceSize
-    }
-    HighlightRect {
-        id: lastDestRect
+            centerX: dragArea.dragPos.x
+            centerY: dragArea.dragPos.y
 
-        visible: boardCon.lastDestSq >= 0
-        square: boardCon.lastDestSq < 0 ? 0 : boardCon.lastDestSq
+            size: board.pieceSize
+            sourceSize: board.pieceSize
+        }
 
-        size: board.pieceSize
-    }
-    HoverRect {
-        id: hoverRect
+        HoverRect {
+            id: hoverRect
 
-        visible: boardCon.phantomId >= 0
-        mouseX: dragArea.dragPos.x
-        mouseY: dragArea.dragPos.y
+            visible: boardCon.phantomId >= 0
+            mouseX: dragArea.dragPos.x
+            mouseY: dragArea.dragPos.y
 
-        size: board.pieceSize
+            size: board.pieceSize
+        }
     }
 
     BoardBackground {

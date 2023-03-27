@@ -8,7 +8,6 @@ Square {
 
     id: hoverRect
 
-    visible: false
     square: (7 - Math.floor(mouseY / size)) * 8 + Math.floor(mouseX / size)
 
     Rectangle {
