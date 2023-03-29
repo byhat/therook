@@ -5,7 +5,7 @@ mod slots;
 pub use slots::*;
 
 mod board;
-use board::{BoardImpl, LegalMove, PieceAtSquare};
+use board::{BoardImpl, LegalMove, PieceAtSquare, SquareExt};
 
 pub struct BoardConImpl {
     tx: std::sync::mpsc::Sender<Signals>,
@@ -13,8 +13,9 @@ pub struct BoardConImpl {
 
     board: BoardImpl,
 
-    highlighted_square: Option<chess::Square>,
     dragged_piece: Option<PieceAtSquare>,
+    highlighted_square: Option<chess::Square>,
+    promotion_squares: Option<(chess::Square, chess::Square)>,
 }
 
 impl BoardConImpl {
@@ -29,8 +30,9 @@ impl BoardConImpl {
 
             board: BoardImpl::default(),
 
-            highlighted_square: None,
             dragged_piece: None,
+            highlighted_square: None,
+            promotion_squares: None,
         };
 
         (_self, signals_rx)
@@ -59,6 +61,7 @@ impl BoardConImpl {
                     }
                 },
             },
+            Slots::Promote { id } => self.finalize_promotion(id),
         }
     }
 
@@ -69,8 +72,6 @@ impl BoardConImpl {
 
 impl BoardConImpl {
     pub fn resync_board(&self) {
-        println!("Synchronizing board...");
-
         self.emit(Signals::Reset);
 
         for piece in self.board.pieces() {
@@ -83,9 +84,14 @@ impl BoardConImpl {
 
     pub fn coord_clicked(&mut self, x: f32, y: f32, piece_size: u32) {
         self.reset_highlights();
+        let highlighted_square = self.highlighted_square.take();
+
+        if self.check_promoting() {
+            return;
+        }
 
         let sq = BoardConImpl::coord_to_square(x, y, piece_size);
-        if let Some(src_sq) = self.highlighted_square.take() {
+        if let Some(src_sq) = highlighted_square {
             if src_sq == sq {
                 // Clicked the same square twice
                 return;
@@ -93,14 +99,12 @@ impl BoardConImpl {
 
             if let Some(legal_move) = self.legal_move(src_sq, sq) {
                 // A legal move!
-                // TODO: promotion
-
                 self.emit(PieceSignals::Move {
                     src_square: src_sq.to_int(),
                     dest_square: sq.to_int(),
                 });
 
-                self.apply_move(legal_move);
+                self.try_apply_move(legal_move);
 
                 return;
             }
@@ -121,8 +125,11 @@ impl BoardConImpl {
 
     pub fn coord_drag_started(&mut self, src_x: f32, src_y: f32, piece_size: u32) {
         self.reset_highlights();
-
         self.highlighted_square.take();
+
+        if self.check_promoting() {
+            return;
+        }
 
         let sq = BoardConImpl::coord_to_square(src_x, src_y, piece_size);
 
@@ -185,15 +192,47 @@ impl BoardConImpl {
         });
         self.emit(Signals::Highlight { square: None });
 
-        // TODO: promotion
-
         // Place down dragged piece
         self.emit(PieceSignals::Place {
             id: piece.piece_id(),
             square: dest_sq.to_int(),
         });
 
-        self.apply_move(legal_move);
+        self.try_apply_move(legal_move);
+    }
+
+    pub fn finalize_promotion(&mut self, id: u8) {
+        if self.promotion_squares.is_none() {
+            println!("nothing to promote");
+            return;
+        }
+
+        let (src_sq, dest_sq) = self.promotion_squares.take().unwrap();
+        let piece = chess::ALL_PIECES[id as usize];
+
+        let chess_move = chess::ChessMove::new(src_sq, dest_sq, Some(piece));
+        let legal_move = LegalMove {
+            inner: chess_move,
+            // fields not used
+            capture: None,
+            castling: None,
+            en_passant: None,
+        };
+
+        let mut piece_id = id;
+        if self.board.side_to_move() == chess::Color::Black {
+            piece_id += 10;
+        }
+        self.emit(PieceSignals::Remove {
+            square: dest_sq.to_int(),
+        });
+        self.emit(PieceSignals::Place {
+            id: piece_id,
+            square: dest_sq.to_int(),
+        });
+        self.emit(Signals::Promoting { file: None });
+
+        self.board.apply_move(legal_move);
     }
 }
 
@@ -244,8 +283,48 @@ impl BoardConImpl {
         None
     }
 
+    fn check_promoting(&mut self) -> bool {
+        if let Some((src_sq, dest_dq)) = self.promotion_squares.take() {
+            self.emit(Signals::Promoting { file: None });
+            self.emit(PieceSignals::Move {
+                src_square: dest_dq.to_int(),
+                dest_square: src_sq.to_int(),
+            });
+
+            if let Some(piece) = self.board.piece_on(dest_dq) {
+                // Captured piece
+                self.emit(PieceSignals::Place {
+                    id: piece.piece_id(),
+                    square: dest_dq.to_int(),
+                });
+            }
+
+            return true;
+        }
+
+        false
+    }
+
     // The moved piece has to be placed before calling this method.
-    fn apply_move(&mut self, legal_move: LegalMove) {
+    fn try_apply_move(&mut self, legal_move: LegalMove) {
+        if let Some(promotion) = legal_move.inner.get_promotion() {
+            // A promotion!
+            let src_sq = legal_move.inner.get_source();
+            let dest_sq = legal_move.inner.get_dest();
+            let mut promotion_file = dest_sq.file();
+            if self.board.side_to_move() == chess::Color::Black {
+                promotion_file += 10;
+            }
+
+            self.promotion_squares.replace((src_sq, dest_sq));
+
+            self.emit(Signals::Promoting {
+                file: Some(promotion_file),
+            });
+
+            return;
+        }
+
         self.emit(Signals::LastMove {
             src_square: Some(legal_move.src().to_int()),
             dest_square: Some(legal_move.dest().to_int()),

@@ -29,11 +29,52 @@ Item {
         id: pieceView
     }
 
+    QtObject {
+        property int file: boardCon.promotingFile
+
+        readonly property var component: Qt.createComponent("PromotionWindow.qml")
+        property var createdObject: null
+
+        function componentConstructor(new_file) {
+            return component.createObject(board, {
+                "file": new_file < 10 ? new_file : new_file - 10,
+                "side": new_file < 10,
+                "isWhite": new_file < 10,
+                "pieceSize": Qt.binding(function () {
+                    return board.pieceSize
+                }),
+            });
+        }
+
+        id: promotionWindow
+
+        function open(new_file) {
+            console.debug("PromotionWindow: open at file", new_file);
+            close();
+            createdObject = componentConstructor(new_file);
+            createdObject.selected.connect(function (piece) {
+                boardCon.promote(piece);
+            });
+        }
+
+        function close() {
+            if (createdObject == null) {
+                return;
+            }
+            console.debug("PromotionWindow: close");
+            createdObject.destroy();
+            createdObject = null;
+        }
+
+        onFileChanged: {
+            if (file < 0) close();
+            else open(file);
+        }
+    }
+
     Component.onCompleted: {
         boardCon.initialize();
-
         pieceView.inner.connect(boardCon);
-
         boardCon.resyncBoard();
     }
 
@@ -56,6 +97,13 @@ Item {
             boardCon.coordDragStarted(srcX, srcY, destX, destY);
         }
     }
+
+    // PromotionWindow {
+    //     file: 2
+    //     pieceSize: board.pieceSize
+    //
+    //     id: promotionWindow
+    // }
 
     Item {
         anchors.fill: parent

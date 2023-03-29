@@ -61,7 +61,8 @@ ApplicationWindow {
 
             Material.elevation: 6
             radius: 8
-            padding: 16
+
+            padding: 0
 
             contentItem: ColumnLayout {
                 Button {

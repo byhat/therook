@@ -56,6 +56,10 @@ pub struct BoardImpl {
 }
 
 impl BoardImpl {
+    pub fn side_to_move(&self) -> chess::Color {
+        self.inner.side_to_move()
+    }
+
     pub fn pieces(&self) -> Vec<PieceAtSquare> {
         let bb = *self.inner.combined();
 

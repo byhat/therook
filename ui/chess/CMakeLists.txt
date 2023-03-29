@@ -43,17 +43,25 @@ qt_add_qml_module(ui_chess
         VERSION 1.0
         RESOURCE_PREFIX /imports
         QML_FILES
+
         qml/Square.qml
-        qml/DragArea.qml
         qml/BasePiece.qml
-        qml/Piece.qml
+
         qml/HighlightRect.qml
         qml/HoverRect.qml
         qml/HintRect.qml
         qml/CaptureHintRect.qml
+
+        qml/Piece.qml
         qml/PhantomPiece.qml
-        qml/Board.qml
-        qml/BoardImpl.qml
+
+        qml/PromotionWindow.qml
+        qml/DragArea.qml
         qml/BoardBackground.qml
+
+        qml/BoardImpl.qml
+        qml/Board.qml
+
         js/BoardView.mjs
+
         )

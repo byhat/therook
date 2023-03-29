@@ -5,6 +5,10 @@ pub enum Slots {
         slot: MouseEventSlots,
         piece_size: u32,
     },
+
+    Promote {
+        id: u8,
+    },
 }
 
 pub enum MouseEventSlots {

@@ -32,4 +32,8 @@ pub enum Signals {
         src_square: Option<u8>,
         dest_square: Option<u8>,
     },
+
+    Promoting {
+        file: Option<u8>,
+    },
 }

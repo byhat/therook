@@ -22,17 +22,21 @@ mod ffi {
 
     #[cxx_qt::qobject(qml_uri = "fr.therook.ui", qml_version = "1.0")]
     pub struct BoardCon {
+        // Q_PROPERTY
         #[qproperty]
         piece_size: u32,
 
+        // Dragged phantom piece
         #[qproperty]
         phantom_id: i8,
 
+        // Move hints
         #[qproperty]
         hint_sq: QVector_u8,
         #[qproperty]
         capture_sq: QVector_u8,
 
+        // Move highlights
         #[qproperty]
         highlight_sq: i8,
         #[qproperty]
@@ -40,6 +44,11 @@ mod ffi {
         #[qproperty]
         last_dest_sq: i8,
 
+        // Promotion
+        #[qproperty]
+        promoting_file: i8,
+
+        // Inter-thread comms channels
         tx: Option<std::sync::mpsc::Sender<p::Slots>>,
     }
 
@@ -56,6 +65,8 @@ mod ffi {
                 highlight_sq: -1,
                 last_src_sq: -1,
                 last_dest_sq: -1,
+
+                promoting_file: -1,
 
                 tx: None,
             }
@@ -100,6 +111,7 @@ mod ffi {
                     self.as_mut().set_last_src_sq(OptionU8(src_square).into());
                     self.as_mut().set_last_dest_sq(OptionU8(dest_square).into());
                 }
+                p::Signals::Promoting { file } => self.set_promoting_file(OptionU8(file).into()),
             }
         }
 
@@ -169,6 +181,15 @@ mod ffi {
                     piece_size: *self.piece_size(),
                 })
                 .unwrap()
+            }
+        }
+
+        #[qinvokable]
+        pub fn promote(&self, piece_id: u8) {
+            println!("piece {} promoted", piece_id);
+
+            if let Some(tx) = self.try_tx() {
+                tx.send(p::Slots::Promote { id: piece_id }).unwrap()
             }
         }
     }
