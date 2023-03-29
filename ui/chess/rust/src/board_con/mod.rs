@@ -146,6 +146,8 @@ mod ffi {
 
         #[qinvokable]
         pub fn resync_board(&self) {
+            println!("Resynchronizing board...");
+
             if let Some(tx) = self.try_tx() {
                 tx.send(p::Slots::Resync).unwrap()
             }

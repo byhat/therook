@@ -19,6 +19,11 @@ qt_add_qml_module(ui
     VERSION 1.0
     RESOURCE_PREFIX /imports
     QML_FILES
-        RoundPane.qml
+        qml/RoundPane.qml
+        qml/PlayerInfo.qml
+        qml/EvalBar.qml
+
+        qml/SidePanel.qml
+
         main.qml
 )

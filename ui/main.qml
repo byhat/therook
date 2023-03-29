@@ -47,33 +47,18 @@ ApplicationWindow {
 
     RowLayout {
         anchors.fill: parent
+        anchors.margins: 8
+
+        spacing: 8
 
         Board {
             Layout.preferredWidth: height
             Layout.fillHeight: true
-            Layout.margins: 8
         }
 
-        RoundPane {
+        SidePanel {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.margins: 8
-
-            Material.elevation: 6
-            radius: 8
-
-            padding: 0
-
-            contentItem: ColumnLayout {
-                Button {
-                    text: "press!"
-                }
-
-                TextArea {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                }
-            }
         }
     }
 }
