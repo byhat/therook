@@ -1,7 +1,8 @@
 import QtQuick
 
 Image {
-    property int pieceSize
+    required property int pieceSize
+
     readonly property int fileRankLabelSize: pieceSize < 1 ? 4 : pieceSize / 8
 
     readonly property color primary: "#eae9d2"

@@ -4,7 +4,7 @@ BasePiece {
     property real centerX: 0
     property real centerY: 0
 
-    property int size: 0
+    required property int size
 
     width: size
     height: size

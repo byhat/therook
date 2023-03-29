@@ -2,7 +2,7 @@ import QtQuick
 
 Item {
     property int square: -1
-    property int size: 0
+    required property int size
 
     readonly property int rank: square >= 0 ? square >> 3 : 0
     readonly property int file: square >= 0 ? square & 7 : 0

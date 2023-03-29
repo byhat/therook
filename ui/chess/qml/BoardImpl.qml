@@ -4,9 +4,9 @@ import fr.therook.ui
 import "../js/BoardView.mjs" as BoardView
 
 Item {
-    id: board
+    required property int pieceSize
 
-    property int pieceSize
+    id: board
 
     QtObject {
         readonly property var component: Qt.createComponent("Piece.qml")
@@ -98,13 +98,6 @@ Item {
         }
     }
 
-    // PromotionWindow {
-    //     file: 2
-    //     pieceSize: board.pieceSize
-    //
-    //     id: promotionWindow
-    // }
-
     Item {
         anchors.fill: parent
 
@@ -114,8 +107,9 @@ Item {
             model: boardCon.hintSq
 
             HintRect {
-                square: modelData
+                required property int modelData
 
+                square: modelData
                 size: board.pieceSize
             }
         }
@@ -124,8 +118,9 @@ Item {
             model: boardCon.captureSq
 
             CaptureHintRect {
-                square: modelData
+                required property int modelData
 
+                square: modelData
                 size: board.pieceSize
             }
         }

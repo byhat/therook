@@ -1,28 +1,19 @@
 import QtQuick
 
 Item {
-    property int pieceId: 0
+    required property int pieceId
+    required property int sourceSize
 
-    property int sourceSize: 0
+    QtObject {
+        readonly property bool isWhite: pieceId < 10
+        readonly property int normPieceId: isWhite ? pieceId : pieceId - 10
 
-    readonly property string pieceUri: "qrc:/chess/pieces/" + get_piece_uri(pieceId) + ".svg"
+        readonly property var uriMapping: ["P", "N", "B", "R", "Q", "K"]
+        readonly property var uriName: (isWhite ? "w" : "b") + uriMapping[normPieceId]
 
-    function get_piece_uri(piece_num) {
-        var is_white = piece_num < 10;
-        if (!is_white) piece_num -= 10;
+        readonly property string pieceUri: "qrc:/chess/pieces/" + uriName + ".svg"
 
-        var result = "";
-
-        switch (piece_num) {
-        case 0: result = "P"; break;
-        case 1: result = "N"; break;
-        case 2: result = "B"; break;
-        case 3: result = "R"; break;
-        case 4: result = "Q"; break;
-        case 5: result = "K"; break;
-        }
-
-        return (is_white ? "w" : "b") + result;
+        id: inner
     }
 
     Image {
@@ -30,10 +21,11 @@ Item {
 
         sourceSize.width: parent.sourceSize
         sourceSize.height: parent.sourceSize
+
+        source: inner.pieceUri
+
         fillMode: Image.Pad
         smooth: false
-
-        source: pieceUri
         cache: false
         asynchronous: true
     }

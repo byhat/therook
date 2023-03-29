@@ -1,8 +1,8 @@
 import QtQuick
 
 Square {
-    property alias pieceId: basePiece.pieceId
-    property alias sourceSize: basePiece.sourceSize
+    required property int pieceId
+    required property int sourceSize
     property bool animationEnabled: false
 
     readonly property int transitionDuration: 150
@@ -15,6 +15,9 @@ Square {
         anchors.fill: parent
 
         id: basePiece
+
+        pieceId: piece_canvas.pieceId // required properties does not work with aliases
+        sourceSize: piece_canvas.sourceSize
     }
 
     Behavior on x {
