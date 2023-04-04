@@ -79,4 +79,8 @@ impl BoardImpl {
 
         self.cur_node = new_node;
     }
+
+    pub fn pgn(&self) -> String {
+        format!("{}", self.inner)
+    }
 }

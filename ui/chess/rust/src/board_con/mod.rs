@@ -48,6 +48,10 @@ mod ffi {
         #[qproperty]
         promoting_file: i8,
 
+        // PGN of current game
+        #[qproperty]
+        pgn: QString,
+
         // Inter-thread comms channels
         tx: Option<std::sync::mpsc::Sender<p::Slots>>,
     }
@@ -67,6 +71,8 @@ mod ffi {
                 last_dest_sq: -1,
 
                 promoting_file: -1,
+
+                pgn: QString::default(),
 
                 tx: None,
             }
@@ -112,6 +118,7 @@ mod ffi {
                     self.as_mut().set_last_dest_sq(OptionU8(dest_square).into());
                 }
                 p::Signals::Promoting { file } => self.set_promoting_file(OptionU8(file).into()),
+                p::Signals::PGN { string } => self.set_pgn(QString::from(string.as_str())),
             }
         }
 

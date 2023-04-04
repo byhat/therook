@@ -6,6 +6,8 @@ import "../js/BoardView.mjs" as BoardView
 Item {
     required property int pieceSize
 
+    property alias pgn: boardCon.pgn
+
     id: board
 
     QtObject {
@@ -146,8 +148,12 @@ Item {
     Item {
         anchors.fill: parent
 
+        z: 11
+
         PhantomPiece {
             id: phantomPiece
+
+            z: 1
 
             visible: boardCon.phantomId >= 0
             pieceId: boardCon.phantomId < 0 ? 0 : boardCon.phantomId
@@ -161,6 +167,8 @@ Item {
 
         HoverRect {
             id: hoverRect
+
+            z: 0
 
             visible: boardCon.phantomId >= 0
             mouseX: dragArea.dragPos.x

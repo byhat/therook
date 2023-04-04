@@ -10,7 +10,6 @@ BasePiece {
     height: size
     x: centerX - size / 2
     y: centerY - size / 2
-    z: 11
 
     id: phantomPiece
 

@@ -36,4 +36,8 @@ pub enum Signals {
     Promoting {
         file: Option<u8>,
     },
+
+    PGN {
+        string: String,
+    },
 }

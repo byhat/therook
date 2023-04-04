@@ -4,6 +4,8 @@ import QtQuick.Layouts
 import QtQuick.Controls.Material
 
 RoundPane {
+    property alias pgn: pgn_viewer.text
+
     Material.elevation: 6
 
     radius: 8
@@ -34,9 +36,15 @@ RoundPane {
                 rating: 401
             }
 
-            Item {
+            TextArea {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+
+                id: pgn_viewer
+
+                placeholderText: "PGN"
+                wrapMode: TextEdit.WordWrap
+                readOnly: true
             }
 
             PlayerInfo {

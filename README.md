@@ -6,17 +6,24 @@ A somewhat familiar chess app.
 
 ![screenshot 0](screenshots/0.png)
 
-## What's the Point?
+## What's Implemented?
 
-Huh, it's fun to create something.
-More importantly, I am trying to prove that Rust,
-when combined with QtQuick, makes a surprisingly versatile
-and powerful GUI toolkit. While both Rust and Qt are powerful
-in their own ways, combining them requires some unorthodox thinking.
+Most progress is being made in the library
+[
+![crates.io/sacrifice](
+https://img.shields.io/crates/v/sacrifice?color=red&logo=rust&label=crates.io%2Fsacrifice&style=flat-square
+)
+](https://crates.io/crates/sacrifice),
+as Rust currently lacks good chess libraries.
+
+Features already implemented:
+- [x] Node tree traversal
+- [x] PGN parsing and writing
 
 ## What's Next?
 
-- [ ] UCI interface, PGN parser, etc
-- [ ] Implement computer play
-- [ ] More UI polishment
+- [ ] UCI interface, etc
+- [ ] Eval bar
+- [ ] Computer play
+- [ ] UI polishment
 - [ ] lichess integration

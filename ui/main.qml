@@ -54,11 +54,15 @@ ApplicationWindow {
         Board {
             Layout.preferredWidth: height
             Layout.fillHeight: true
+
+            id: board
         }
 
         SidePanel {
             Layout.fillWidth: true
             Layout.fillHeight: true
+
+            pgn: board.pgn
         }
     }
 }

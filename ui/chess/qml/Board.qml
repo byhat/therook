@@ -4,6 +4,8 @@ Item {
     readonly property int boardSize: pieceSize * 8
     readonly property int pieceSize: Math.floor(Math.min(width, height) / 8)
 
+    readonly property alias pgn: board.pgn
+
     id: canvas
 
     BoardImpl {
