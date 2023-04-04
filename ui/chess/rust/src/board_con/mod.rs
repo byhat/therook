@@ -118,10 +118,13 @@ mod ffi {
         #[qinvokable]
         pub fn initialize(self: Pin<&mut Self>) {
             let (slots_tx, slots_rx) = std::sync::mpsc::channel::<p::Slots>();
+            let (signals_tx, signals_rx) = std::sync::mpsc::channel::<p::Signals>();
 
-            let (mut _impl, signals_rx) = p::BoardConImpl::from_rx(slots_rx);
+            std::thread::spawn(move || {
+                let mut _impl = p::BoardConImpl::from_rx(signals_tx, slots_rx);
 
-            std::thread::spawn(move || _impl.run());
+                _impl.run();
+            });
 
             let qt_thread = self.qt_thread();
 

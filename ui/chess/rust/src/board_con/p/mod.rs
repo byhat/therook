@@ -5,7 +5,7 @@ mod slots;
 pub use slots::*;
 
 mod board;
-use board::{BoardImpl, LegalMove, PieceAtSquare, SquareExt};
+use board::{BoardImpl, PieceAtSquare};
 
 pub struct BoardConImpl {
     tx: std::sync::mpsc::Sender<Signals>,
@@ -14,17 +14,16 @@ pub struct BoardConImpl {
     board: BoardImpl,
 
     dragged_piece: Option<PieceAtSquare>,
-    highlighted_square: Option<chess::Square>,
-    promotion_squares: Option<(chess::Square, chess::Square)>,
+    highlighted_square: Option<sac::Square>,
+    promotion: Option<sac::Move>,
 }
 
 impl BoardConImpl {
     pub fn from_rx(
+        signals_tx: std::sync::mpsc::Sender<Signals>,
         slots_rx: std::sync::mpsc::Receiver<Slots>,
-    ) -> (Self, std::sync::mpsc::Receiver<Signals>) {
-        let (signals_tx, signals_rx) = std::sync::mpsc::channel::<Signals>();
-
-        let _self = Self {
+    ) -> Self {
+        Self {
             tx: signals_tx,
             rx: slots_rx,
 
@@ -32,10 +31,8 @@ impl BoardConImpl {
 
             dragged_piece: None,
             highlighted_square: None,
-            promotion_squares: None,
-        };
-
-        (_self, signals_rx)
+            promotion: None,
+        }
     }
 }
 
@@ -77,7 +74,7 @@ impl BoardConImpl {
         for piece in self.board.pieces() {
             self.emit(PieceSignals::Place {
                 id: piece.piece_id(),
-                square: piece.square.to_int(),
+                square: piece.square.into(),
             });
         }
     }
@@ -100,8 +97,8 @@ impl BoardConImpl {
             if let Some(legal_move) = self.legal_move(src_sq, sq) {
                 // A legal move!
                 self.emit(PieceSignals::Move {
-                    src_square: src_sq.to_int(),
-                    dest_square: sq.to_int(),
+                    src_square: src_sq.into(),
+                    dest_square: sq.into(),
                 });
 
                 self.try_apply_move(legal_move);
@@ -117,7 +114,7 @@ impl BoardConImpl {
 
         self.highlighted_square.replace(sq);
         self.emit(Signals::Highlight {
-            square: Some(sq.to_int()),
+            square: Some(sq.into()),
         });
 
         self.show_hints(sq);
@@ -145,7 +142,7 @@ impl BoardConImpl {
         self.dragged_piece.replace(piece);
 
         {
-            let square = sq.to_int();
+            let square: u8 = sq.into();
             self.emit(PieceSignals::Remove { square });
             self.emit(Signals::Highlight {
                 square: Some(square),
@@ -176,7 +173,7 @@ impl BoardConImpl {
         } else {
             self.emit(PieceSignals::Place {
                 id: piece.piece_id(),
-                square: src_sq.to_int(),
+                square: src_sq.into(),
             });
             return;
         };
@@ -195,44 +192,42 @@ impl BoardConImpl {
         // Place down dragged piece
         self.emit(PieceSignals::Place {
             id: piece.piece_id(),
-            square: dest_sq.to_int(),
+            square: dest_sq.into(),
         });
 
         self.try_apply_move(legal_move);
     }
 
     pub fn finalize_promotion(&mut self, id: u8) {
-        if self.promotion_squares.is_none() {
+        if self.promotion.is_none() {
             println!("nothing to promote");
             return;
         }
 
-        let (src_sq, dest_sq) = self.promotion_squares.take().unwrap();
-        let piece = chess::ALL_PIECES[id as usize];
-
-        let chess_move = chess::ChessMove::new(src_sq, dest_sq, Some(piece));
-        let legal_move = LegalMove {
-            inner: chess_move,
-            // fields not used
-            capture: None,
-            castling: None,
-            en_passant: None,
+        let mut promotion_move = self.promotion.take().unwrap();
+        let role = sac::Role::ALL[id as usize];
+        let promotion_move = sac::Move::Normal {
+            role: sac::Role::Pawn, // duh
+            from: promotion_move.from().unwrap(),
+            capture: promotion_move.capture(),
+            to: promotion_move.to(),
+            promotion: Some(role),
         };
 
         let mut piece_id = id;
-        if self.board.side_to_move() == chess::Color::Black {
+        if self.board.turn() == sac::Color::Black {
             piece_id += 10;
         }
         self.emit(PieceSignals::Remove {
-            square: dest_sq.to_int(),
+            square: promotion_move.to().into(),
         });
         self.emit(PieceSignals::Place {
             id: piece_id,
-            square: dest_sq.to_int(),
+            square: promotion_move.to().into(),
         });
         self.emit(Signals::Promoting { file: None });
 
-        self.board.apply_move(legal_move);
+        self.apply_move(promotion_move);
     }
 }
 
@@ -249,19 +244,19 @@ impl BoardConImpl {
         self.emit(Signals::Highlight { square: None });
     }
 
-    fn show_hints(&self, sq: chess::Square) {
-        let (legal_capture_vec, legal_move_vec): (Vec<LegalMove>, Vec<LegalMove>) = self
+    fn show_hints(&self, sq: sac::Square) {
+        let (legal_capture_vec, legal_move_vec): (Vec<sac::Move>, Vec<sac::Move>) = self
             .board
             .moves_of(sq)
             .into_iter()
-            .partition(|m| m.capture.is_some());
+            .partition(|m| m.capture().is_some());
         let legal_move_vec = legal_move_vec
             .into_iter()
-            .map(|m| m.dest().to_int())
+            .map(|m| m.to().into())
             .collect::<Vec<u8>>();
         let legal_capture_vec = legal_capture_vec
             .into_iter()
-            .map(|m| m.dest().to_int())
+            .map(|m| m.to().into())
             .collect::<Vec<u8>>();
         self.emit(Signals::Hint {
             squares: legal_move_vec,
@@ -271,10 +266,10 @@ impl BoardConImpl {
         });
     }
 
-    fn legal_move(&self, src_sq: chess::Square, dest_sq: chess::Square) -> Option<LegalMove> {
+    fn legal_move(&self, src_sq: sac::Square, dest_sq: sac::Square) -> Option<sac::Move> {
         let legal_move_vec = self.board.moves_of(src_sq);
         for legal_move in legal_move_vec {
-            if legal_move.dest() == dest_sq {
+            if legal_move.to() == dest_sq {
                 // A legal move!
                 return Some(legal_move);
             }
@@ -284,18 +279,18 @@ impl BoardConImpl {
     }
 
     fn check_promoting(&mut self) -> bool {
-        if let Some((src_sq, dest_dq)) = self.promotion_squares.take() {
+        if let Some(promotion_move) = self.promotion.take() {
             self.emit(Signals::Promoting { file: None });
             self.emit(PieceSignals::Move {
-                src_square: dest_dq.to_int(),
-                dest_square: src_sq.to_int(),
+                src_square: promotion_move.to().into(),
+                dest_square: promotion_move.from().unwrap().into(),
             });
 
-            if let Some(piece) = self.board.piece_on(dest_dq) {
+            if let Some(piece) = self.board.piece_on(promotion_move.to()) {
                 // Captured piece
                 self.emit(PieceSignals::Place {
                     id: piece.piece_id(),
-                    square: dest_dq.to_int(),
+                    square: promotion_move.to().into(),
                 });
             }
 
@@ -306,17 +301,22 @@ impl BoardConImpl {
     }
 
     // The moved piece has to be placed before calling this method.
-    fn try_apply_move(&mut self, legal_move: LegalMove) {
-        if let Some(promotion) = legal_move.inner.get_promotion() {
+    fn try_apply_move(&mut self, legal_move: sac::Move) {
+        if let Some(_) = legal_move.promotion() {
             // A promotion!
-            let src_sq = legal_move.inner.get_source();
-            let dest_sq = legal_move.inner.get_dest();
-            let mut promotion_file = dest_sq.file();
-            if self.board.side_to_move() == chess::Color::Black {
+
+            let mut promotion_file: u8 = legal_move.to().file().into();
+            if self.board.turn() == sac::Color::Black {
                 promotion_file += 10;
             }
 
-            self.promotion_squares.replace((src_sq, dest_sq));
+            self.promotion.replace(sac::Move::Normal {
+                role: sac::Role::Pawn,
+                from: legal_move.from().unwrap(),
+                capture: legal_move.capture(),
+                to: legal_move.to(),
+                promotion: None, // clear promotion role
+            });
 
             self.emit(Signals::Promoting {
                 file: Some(promotion_file),
@@ -326,33 +326,43 @@ impl BoardConImpl {
         }
 
         self.emit(Signals::LastMove {
-            src_square: Some(legal_move.src().to_int()),
-            dest_square: Some(legal_move.dest().to_int()),
+            src_square: Some(legal_move.from().unwrap().into()),
+            dest_square: Some(legal_move.to().into()),
         });
 
-        if let Some(ep_square) = legal_move.en_passant {
+        if let sac::Move::EnPassant { from, to } = legal_move {
+            let ep_square = sac::Square::from_coords(to.file(), from.rank());
             self.emit(PieceSignals::Remove {
-                square: ep_square.to_int(),
+                square: ep_square.into(),
             });
         }
 
-        if let Some((src_sq, dest_sq)) = legal_move.castling {
+        if let Some(castling_side) = legal_move.castling_side() {
+            let from_rank = legal_move.from().unwrap().rank();
+            let from_file = if castling_side.is_king_side() {
+                sac::File::H
+            } else {
+                sac::File::A
+            };
+            let to_file = castling_side.rook_to_file();
+
             self.emit(PieceSignals::Move {
-                src_square: src_sq.to_int(),
-                dest_square: dest_sq.to_int(),
+                src_square: sac::Square::from_coords(from_file, from_rank).into(),
+                dest_square: sac::Square::from_coords(to_file, from_rank).into(),
             });
         }
 
-        self.board.apply_move(legal_move);
+        self.apply_move(legal_move);
     }
 
-    pub fn coord_to_square(x: f32, y: f32, piece_size: u32) -> chess::Square {
+    fn apply_move(&mut self, m: sac::Move) {
+        self.board.apply_move(m);
+    }
+
+    pub fn coord_to_square(x: f32, y: f32, piece_size: u32) -> sac::Square {
         let file: u32 = x as u32 / piece_size;
         let rank: u32 = 7 - (y as u32 / piece_size);
 
-        chess::Square::make_square(
-            chess::Rank::from_index(rank as usize),
-            chess::File::from_index(file as usize),
-        )
+        sac::Square::from_coords(sac::File::new(file), sac::Rank::new(rank))
     }
 }
