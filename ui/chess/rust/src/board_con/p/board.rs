@@ -83,4 +83,20 @@ impl BoardImpl {
     pub fn pgn(&self) -> String {
         format!("{}", self.inner)
     }
+
+    pub fn traverse_prev(&mut self) -> Option<Uuid> {
+        let parent_node = self.inner.parent(self.cur_node)?;
+        self.cur_node = parent_node;
+        Some(parent_node)
+    }
+
+    pub fn traverse_next_mainline(&mut self) -> Option<Uuid> {
+        let child_node = self.inner.mainline(self.cur_node)?;
+        self.cur_node = child_node;
+        Some(child_node)
+    }
+
+    pub fn prev_move(&self) -> Option<sac::Move> {
+        self.inner.prev_move(self.cur_node)
+    }
 }

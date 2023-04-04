@@ -198,10 +198,24 @@ mod ffi {
 
         #[qinvokable]
         pub fn promote(&self, piece_id: u8) {
-            println!("piece {} promoted", piece_id);
+            // println!("piece {} promoted", piece_id);
 
             if let Some(tx) = self.try_tx() {
                 tx.send(p::Slots::Promote { id: piece_id }).unwrap()
+            }
+        }
+
+        #[qinvokable]
+        pub fn prev_move(&self) {
+            if let Some(tx) = self.try_tx() {
+                tx.send(p::Slots::Traverse { forward: false }).unwrap()
+            }
+        }
+
+        #[qinvokable]
+        pub fn next_move(&self) {
+            if let Some(tx) = self.try_tx() {
+                tx.send(p::Slots::Traverse { forward: true }).unwrap()
             }
         }
     }

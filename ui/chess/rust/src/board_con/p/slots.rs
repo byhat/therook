@@ -9,6 +9,10 @@ pub enum Slots {
     Promote {
         id: u8,
     },
+
+    Traverse {
+        forward: bool,
+    }
 }
 
 pub enum MouseEventSlots {

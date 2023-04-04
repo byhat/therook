@@ -98,6 +98,13 @@ Item {
         onDragStarted: function (srcX, srcY, destX, destY) {
             boardCon.coordDragStarted(srcX, srcY, destX, destY);
         }
+        onScrolled: function (delta) {
+            if (delta > 0) {
+                boardCon.nextMove();
+            } else {
+                boardCon.prevMove();
+            }
+        }
     }
 
     Item {

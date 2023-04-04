@@ -7,6 +7,7 @@ Item {
     signal clicked(real x, real y)
     signal dragEnded(real srcX, real srcY, real destX, real destY)
     signal dragStarted(real srcX, real srcY, real destX, real destY)
+    signal scrolled(real delta);
 
     //    onDragChanged: console.log("dragging changed:", drag)
     Item {
@@ -95,6 +96,9 @@ Item {
         onReleased: {
             clickedController.released(); // has to be before dragCon
             dragController.released();
+        }
+        onWheel: function (wheel) {
+            dragArea.scrolled(wheel.angleDelta.y);
         }
     }
 }

@@ -62,6 +62,13 @@ impl BoardConImpl {
                 },
             },
             Slots::Promote { id } => self.finalize_promotion(id),
+            Slots::Traverse { forward } => {
+                if forward {
+                    self.next_mainline_node()
+                } else {
+                    self.prev_node()
+                }
+            }
         }
     }
 
@@ -252,6 +259,32 @@ impl BoardConImpl {
         self.emit(Signals::Promoting { file: None });
 
         self.apply_move(promotion_move);
+    }
+
+    pub fn prev_node(&mut self) {
+        if let Some(_) = self.board.traverse_prev() {
+            self.resync_board();
+
+            if let Some(m) = self.board.prev_move() {
+                self.emit(Signals::LastMove {
+                    src_square: Some(m.from().unwrap().into()),
+                    dest_square: Some(m.to().into()),
+                });
+            }
+        }
+    }
+
+    pub fn next_mainline_node(&mut self) {
+        if let Some(_) = self.board.traverse_next_mainline() {
+            self.resync_board();
+
+            if let Some(m) = self.board.prev_move() {
+                self.emit(Signals::LastMove {
+                    src_square: Some(m.from().unwrap().into()),
+                    dest_square: Some(m.to().into()),
+                });
+            }
+        }
     }
 }
 
