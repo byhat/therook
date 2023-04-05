@@ -11,7 +11,10 @@ mod ffi {
 
     #[cxx_qt::qsignals(BoardCon)]
     pub enum Signals {
-        ResetBoard,
+        ResetBoard {
+            initial_squares: QVector_u8,
+            initial_pieces: QVector_u8
+        },
 
         PlacePiece { id: u8, square: u8 },
         MovePiece { src_square: u8, dest_square: u8 },
@@ -90,7 +93,21 @@ mod ffi {
             }
 
             match signal {
-                p::Signals::Reset => self.as_mut().emit(Signals::ResetBoard),
+                p::Signals::Reset{ initial } => {
+                    let initial_squares = initial.iter()
+                        .map(|(u, v)| *u)
+                        .collect::<Vec<u8>>();
+                    let initial_pieces = initial.iter()
+                        .map(|(u, v)| *v)
+                        .collect::<Vec<u8>>();
+
+                    self.as_mut().emit(
+                        Signals::ResetBoard {
+                            initial_squares: initial_squares.into(),
+                            initial_pieces: initial_pieces.into()
+                        }
+                    )
+                },
                 p::Signals::Piece(piece) => match piece {
                     p::PieceSignals::Place { id, square } => {
                         self.as_mut().emit(Signals::PlacePiece { id, square })

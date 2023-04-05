@@ -79,14 +79,16 @@ impl BoardConImpl {
 
 impl BoardConImpl {
     pub fn resync_board(&self) {
-        self.emit(Signals::Reset);
+        let initial = self.board.pieces()
+            .into_iter()
+            .map(|v| (v.square.into(), v.piece_id()))
+            .collect::<Vec<(u8, u8)>>();
 
-        for piece in self.board.pieces() {
-            self.emit(PieceSignals::Place {
-                id: piece.piece_id(),
-                square: piece.square.into(),
-            });
-        }
+        self.emit(
+            Signals::Reset {
+                initial
+            }
+        );
     }
 
     pub fn coord_clicked(&mut self, x: f32, y: f32, piece_size: u32) {
@@ -232,9 +234,6 @@ impl BoardConImpl {
         if self.board.turn() == sac::Color::Black {
             piece_id += 10;
         }
-        self.emit(PieceSignals::Remove {
-            square: promotion_move.to().into(),
-        });
         self.emit(PieceSignals::Place {
             id: piece_id,
             square: promotion_move.to().into(),
@@ -252,6 +251,11 @@ impl BoardConImpl {
                 self.emit(Signals::LastMove {
                     src_square: Some(m.from().unwrap().into()),
                     dest_square: Some(m.to().into()),
+                });
+            } else {
+                self.emit(Signals::LastMove {
+                    src_square: None,
+                    dest_square: None,
                 });
             }
         }

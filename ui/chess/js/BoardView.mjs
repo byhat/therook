@@ -17,8 +17,8 @@ export class Piece {
         boardCon.removePiece.connect(function (square) {
             this_out.remove(square);
         });
-        boardCon.resetBoard.connect(function () {
-            this_out.reset()
+        boardCon.resetBoard.connect(function (squares, pieces) {
+            this_out.reset(squares, pieces)
         })
     }
 
@@ -50,9 +50,31 @@ export class Piece {
         this.pieceVec[dest] = srcPiece;
     }
 
-    reset() {
+    reset(squares, pieces) {
+        const initial = squares.map(function(e, i) {
+            return [e, pieces[i]];
+        });
+
         const prevPieceVec = this.pieceVec;
         this.pieceVec = Array(64).fill(null);
+
+        for (const val of initial) {
+            const square = val[0];
+            const pieceId = val[1];
+
+            if (prevPieceVec[square] != null) {
+                if (prevPieceVec[square].pieceId == pieceId) {
+                    // Move piece to new array
+                    this.pieceVec[square] = prevPieceVec[square];
+                    prevPieceVec[square] = null;
+                    continue;
+                }
+            }
+
+            const new_piece = this.componentConstructor(pieceId, square);
+            this.pieceVec[square] = new_piece;
+        }
+
         for (const piece of prevPieceVec) {
             if (piece != null) {
                 piece.destroy();
