@@ -107,16 +107,7 @@ impl BoardConImpl {
             if let Some(m) = self.legal_move(src_sq, sq) {
                 // A legal move!
 
-                let mut dest_sq = sq;
-
-                if let sac::Move::Castle { king: _, rook } = m {
-                    let castling_side = m.castling_side().unwrap();
-
-                    let to_rank = m.from().unwrap().rank();
-                    let to_file = castling_side.king_to_file();
-
-                    dest_sq = sac::Square::from_coords(to_file, to_rank);
-                }
+                let (src_sq, dest_sq) = self.squares_from_move(&m);
 
                 self.emit(PieceSignals::Move {
                     src_square: src_sq.into(),
@@ -199,6 +190,7 @@ impl BoardConImpl {
             });
             return;
         };
+        let (src_sq, dest_sq) = self.squares_from_move(&m);
 
         // A legal move
         self.highlighted_square.take();
@@ -210,15 +202,6 @@ impl BoardConImpl {
             squares: Vec::new(),
         });
         self.emit(Signals::Highlight { square: None });
-
-        if let sac::Move::Castle { king: _, rook } = m {
-            let castling_side = m.castling_side().unwrap();
-
-            let to_rank = m.from().unwrap().rank();
-            let to_file = castling_side.king_to_file();
-
-            dest_sq = sac::Square::from_coords(to_file, to_rank);
-        }
 
         // Place down dragged piece
         self.emit(PieceSignals::Place {
@@ -363,6 +346,22 @@ impl BoardConImpl {
         None
     }
 
+    fn squares_from_move(&self, m: &sac::Move) -> (sac::Square, sac::Square) {
+        let src_sq = m.from().unwrap();
+        let mut dest_sq = m.to();
+
+        if let sac::Move::Castle { king: _, rook } = m {
+            let castling_side = m.castling_side().unwrap();
+
+            let to_rank = m.from().unwrap().rank();
+            let to_file = castling_side.king_to_file();
+
+            dest_sq = sac::Square::from_coords(to_file, to_rank);
+        }
+
+        (src_sq, dest_sq)
+    }
+
     fn check_promoting(&mut self) -> bool {
         if let Some(promotion_move) = self.promotion.take() {
             self.emit(Signals::Promoting { file: None });
@@ -422,6 +421,7 @@ impl BoardConImpl {
             });
         }
 
+        // move the rook
         if let sac::Move::Castle { king, rook } = m {
             let castling_side = m.castling_side().unwrap();
             let from_rank = m.from().unwrap().rank();

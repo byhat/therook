@@ -12,7 +12,7 @@ pub enum Slots {
 
     Traverse {
         forward: bool,
-    }
+    },
 }
 
 pub enum MouseEventSlots {
