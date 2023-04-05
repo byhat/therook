@@ -12,7 +12,7 @@ impl From<PieceSignals> for Signals {
 
 pub enum Signals {
     Reset {
-        initial: Vec<(u8, u8)>
+        initial: Vec<(u8, u8)>,
     },
 
     Piece(PieceSignals),

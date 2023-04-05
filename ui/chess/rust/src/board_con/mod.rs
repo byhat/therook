@@ -13,12 +13,20 @@ mod ffi {
     pub enum Signals {
         ResetBoard {
             initial_squares: QVector_u8,
-            initial_pieces: QVector_u8
+            initial_pieces: QVector_u8,
         },
 
-        PlacePiece { id: u8, square: u8 },
-        MovePiece { src_square: u8, dest_square: u8 },
-        RemovePiece { square: u8 },
+        PlacePiece {
+            id: u8,
+            square: u8,
+        },
+        MovePiece {
+            src_square: u8,
+            dest_square: u8,
+        },
+        RemovePiece {
+            square: u8,
+        },
     }
 
     use super::p;
@@ -93,21 +101,15 @@ mod ffi {
             }
 
             match signal {
-                p::Signals::Reset{ initial } => {
-                    let initial_squares = initial.iter()
-                        .map(|(u, v)| *u)
-                        .collect::<Vec<u8>>();
-                    let initial_pieces = initial.iter()
-                        .map(|(u, v)| *v)
-                        .collect::<Vec<u8>>();
+                p::Signals::Reset { initial } => {
+                    let initial_squares = initial.iter().map(|(u, v)| *u).collect::<Vec<u8>>();
+                    let initial_pieces = initial.iter().map(|(u, v)| *v).collect::<Vec<u8>>();
 
-                    self.as_mut().emit(
-                        Signals::ResetBoard {
-                            initial_squares: initial_squares.into(),
-                            initial_pieces: initial_pieces.into()
-                        }
-                    )
-                },
+                    self.as_mut().emit(Signals::ResetBoard {
+                        initial_squares: initial_squares.into(),
+                        initial_pieces: initial_pieces.into(),
+                    })
+                }
                 p::Signals::Piece(piece) => match piece {
                     p::PieceSignals::Place { id, square } => {
                         self.as_mut().emit(Signals::PlacePiece { id, square })

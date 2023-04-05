@@ -79,16 +79,14 @@ impl BoardConImpl {
 
 impl BoardConImpl {
     pub fn resync_board(&self) {
-        let initial = self.board.pieces()
+        let initial = self
+            .board
+            .pieces()
             .into_iter()
             .map(|v| (v.square.into(), v.piece_id()))
             .collect::<Vec<(u8, u8)>>();
 
-        self.emit(
-            Signals::Reset {
-                initial
-            }
-        );
+        self.emit(Signals::Reset { initial });
     }
 
     pub fn coord_clicked(&mut self, x: f32, y: f32, piece_size: u32) {
