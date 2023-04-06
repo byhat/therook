@@ -30,6 +30,7 @@ mod ffi {
     }
 
     use super::p;
+    use super::p::PipelinedBackend;
 
     #[cxx_qt::qobject(qml_uri = "fr.therook.ui", qml_version = "1.0")]
     pub struct BoardCon {
@@ -102,8 +103,8 @@ mod ffi {
 
             match signal {
                 p::Signals::Reset { initial } => {
-                    let initial_squares = initial.iter().map(|(u, v)| *u).collect::<Vec<u8>>();
-                    let initial_pieces = initial.iter().map(|(u, v)| *v).collect::<Vec<u8>>();
+                    let initial_squares = initial.iter().map(|(u, _)| *u).collect::<Vec<u8>>();
+                    let initial_pieces = initial.iter().map(|(_, v)| *v).collect::<Vec<u8>>();
 
                     self.as_mut().emit(Signals::ResetBoard {
                         initial_squares: initial_squares.into(),

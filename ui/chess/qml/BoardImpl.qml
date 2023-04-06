@@ -51,7 +51,6 @@ Item {
         id: promotionWindow
 
         function open(new_file) {
-            console.debug("PromotionWindow: open at file", new_file);
             close();
             createdObject = componentConstructor(new_file);
             createdObject.selected.connect(function (piece) {
@@ -63,7 +62,6 @@ Item {
             if (createdObject == null) {
                 return;
             }
-            console.debug("PromotionWindow: close");
             createdObject.destroy();
             createdObject = null;
         }
