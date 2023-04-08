@@ -6,12 +6,12 @@ qt_add_resources(ui "conf"
         qtquickcontrols2.conf
 )
 
-add_subdirectory(chess)
+add_subdirectory(disboard)
 
 set_target_properties(ui PROPERTIES AUTOMOC ON)
 target_link_libraries(
     ui PRIVATE Qt6::Quick Qt6::Svg
-    ui_chessplugin
+    disboardplugin
 )
 
 qt_add_qml_module(ui

@@ -1,8 +1,8 @@
-qt_add_library(ui_chess STATIC)
+qt_add_library(disboard STATIC)
 
 add_subdirectory(assets)
 
-set_target_properties(ui_chess PROPERTIES AUTOMOC ON)
+set_target_properties(disboard PROPERTIES AUTOMOC ON)
 
 find_package(Corrosion QUIET)
 if(NOT Corrosion_FOUND)
@@ -16,7 +16,7 @@ if(NOT Corrosion_FOUND)
     FetchContent_MakeAvailable(Corrosion)
 endif()
 
-set(CRATE therook-ui-chess)
+set(CRATE disboard-rust)
 corrosion_import_crate(MANIFEST_PATH rust/Cargo.toml CRATES ${CRATE})
 
 set(CXXQT_EXPORT_DIR "${CMAKE_CURRENT_BINARY_DIR}/cxxqt")
@@ -25,10 +25,10 @@ corrosion_set_env_vars(${CRATE}
         "QMAKE=${QMAKE}"
         )
 
-add_library(ui_chess_lib INTERFACE)
-target_include_directories(ui_chess_lib INTERFACE "${CXXQT_EXPORT_DIR}/${CRATE}")
+add_library(librustdisboard INTERFACE)
+target_include_directories(librustdisboard INTERFACE "${CXXQT_EXPORT_DIR}/${CRATE}")
 
-target_link_libraries(ui_chess_lib INTERFACE
+target_link_libraries(librustdisboard INTERFACE
         # WHOLE_ARCHIVE is needed for the generated QML plugin to register on startup,
         # otherwise the linker will discard the static variables that initialize it.
         "$<LINK_LIBRARY:WHOLE_ARCHIVE,${CRATE}-static>"
@@ -36,10 +36,10 @@ target_link_libraries(ui_chess_lib INTERFACE
         Qt6::Quick
         )
 
-target_link_libraries(ui_chess PRIVATE Qt6::Quick ui_chess_lib)
+target_link_libraries(disboard PRIVATE Qt6::Quick librustdisboard)
 
-qt_add_qml_module(ui_chess
-        URI ui.chess
+qt_add_qml_module(disboard
+        URI ui.disboard
         VERSION 1.0
         RESOURCE_PREFIX /imports
         QML_FILES

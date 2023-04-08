@@ -1,4 +1,4 @@
-qt_add_resources(ui_chess "assets"
+qt_add_resources(disboard "assets"
     PREFIX "/chess"
     FILES
         blue.svg

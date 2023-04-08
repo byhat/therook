@@ -1,5 +1,5 @@
 [package]
-name = "therook-ui-chess"
+name = "disboard-rust"
 version = "0.1.0"
 edition = "2021"
 
