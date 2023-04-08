@@ -13,6 +13,7 @@ qt_add_executable(app_therook
         main.cpp
         )
 
+add_subdirectory(disboard)
 add_subdirectory(ui)
 
 set_target_properties(app_therook PROPERTIES
@@ -25,7 +26,7 @@ set_target_properties(app_therook PROPERTIES
 
 target_link_libraries(app_therook
         PRIVATE Qt6::Quick
-        uiplugin
+        disboardplugin uiplugin
         )
 
 install(TARGETS app_therook
