@@ -2,9 +2,14 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Controls.Material
+import QtQml.Models
+
+import disboard.impl.controller
 
 RoundPane {
-    property alias pgn: pgn_viewer.text
+    required property var controller
+
+    id: root
 
     Material.elevation: 6
 
@@ -36,15 +41,66 @@ RoundPane {
                 rating: 401
             }
 
-            TextArea {
+            // TextArea {
+            //     Layout.fillWidth: true
+            //     Layout.fillHeight: true
+            //
+            //     id: pgn_viewer
+            //
+            //     placeholderText: "PGN"
+            //     wrapMode: TextEdit.WordWrap
+            //     readOnly: true
+            // }
+
+            TableView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                id: pgn_viewer
+                id: tableView
 
-                placeholderText: "PGN"
-                wrapMode: TextEdit.WordWrap
-                readOnly: true
+                clip: true
+
+                model: MoveListModel {
+                    controller: root.controller
+                }
+                selectionModel: ItemSelectionModel {}
+
+                columnWidthProvider: function (col) {
+                    return width / 2;
+                }
+                rowHeightProvider: function (row) {
+                    return 48;
+                }
+
+                ScrollBar.vertical: ScrollBar {}
+
+                delegate: ItemDelegate {
+                    required property bool selected
+                    required property bool current
+
+                    id: delegate
+
+                    visible: model.node != null
+                    highlighted: row % 2 == 0
+
+                    text: model.node != null ? model.move : ""
+                    onClicked: {
+                        const idx = tableView.index(row, column);
+                        tableView.selectionModel.setCurrentIndex(idx, ItemSelectionModel.NoUpdate);
+                    }
+
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 4
+
+                        width: parent.width * 0.8
+                        height: 2
+
+                        visible: delegate.current
+                        color: palette.buttonText
+                    }
+                }
             }
 
             PlayerInfo {

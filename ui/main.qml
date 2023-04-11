@@ -62,7 +62,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            pgn: board.pgn
+            controller: board.controller
         }
     }
 }
