@@ -63,7 +63,6 @@ RoundPane {
                 model: MoveListModel {
                     controller: root.controller
                 }
-                selectionModel: ItemSelectionModel {}
 
                 columnWidthProvider: function (col) {
                     return width / 2;
@@ -81,24 +80,27 @@ RoundPane {
                     id: delegate
 
                     visible: model.node != null
-                    highlighted: row % 2 == 0
+                    highlighted: controller.curNode == model.node || row % 2 == 0
 
-                    text: model.node != null ? model.move : ""
-                    onClicked: {
-                        const idx = tableView.index(row, column);
-                        tableView.selectionModel.setCurrentIndex(idx, ItemSelectionModel.NoUpdate);
+                    horizontalPadding: 12
+
+                    contentItem: RowLayout {
+                        Text {
+                            Layout.fillWidth: true
+
+                            text: model.node != null ? model.display : ""
+                            font: delegate.font
+                        }
+
+                        Text {
+                            visible: model.variations != null
+                            text: "..."
+                            font: delegate.font
+                        }
                     }
 
-                    Rectangle {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 4
-
-                        width: parent.width * 0.8
-                        height: 2
-
-                        visible: delegate.current
-                        color: palette.buttonText
+                    onClicked: {
+                        controller.curNode = model.node;
                     }
                 }
             }
