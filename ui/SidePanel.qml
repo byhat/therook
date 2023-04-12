@@ -74,6 +74,8 @@ RoundPane {
                 ScrollBar.vertical: ScrollBar {}
 
                 delegate: ItemDelegate {
+                    property var model2: model
+
                     required property bool selected
                     required property bool current
 
@@ -86,16 +88,37 @@ RoundPane {
 
                     contentItem: RowLayout {
                         Text {
-                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
 
                             text: model.node != null ? model.display : ""
-                            font: delegate.font
                         }
 
-                        Text {
-                            visible: model.variations != null
-                            text: "..."
-                            font: delegate.font
+                        ListView {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+
+                            visible: model2.variations != null
+                            orientation: ListView.Horizontal
+                            spacing: 1
+                            clip: true
+
+                            model: model2.variations
+
+                            delegate: Control {
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                padding: 4
+
+                                contentItem: Text {
+                                    text: modelData.display
+                                    color: "#FFFFFF"
+                                    font.pointSize: 8
+                                }
+
+                                background: Rectangle {
+                                    color: Material.accent
+                                }
+                            }
                         }
                     }
 

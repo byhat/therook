@@ -8,13 +8,13 @@ A somewhat familiar chess app.
 
 ## What's Implemented?
 
-Most progress is being made in the library
+Most progress is being made in the chess library
 [
 ![crates.io/sacrifice](
 https://img.shields.io/crates/v/sacrifice?color=red&logo=rust&label=crates.io%2Fsacrifice&style=flat-square
 )
 ](https://crates.io/crates/sacrifice),
-as Rust currently lacks good chess libraries.
+as Rust currently lacks good chess libraries with game tree support.
 
 Features already implemented:
 - [x] Node tree traversal
